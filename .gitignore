@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build Outputs & Bundles
+dist/
+build/
+target/
+release/
+dist_dmg/
+dist_win/
+*.tsbuildinfo
+*.dmg
+*.zip
+*.tar.gz
+*.7z
+
+# App specific bins and heavy binaries
+bin/
+*/bin/
+apps/*/bin/
+apps/*/release/
+apps/*/dist/
+apps/*/dist_dmg/
+apps/*/dist_win/
+apps/*/src-tauri/target/
+*.bin
+*.exe
+*.dll
+*.dylib
+*.so
+*.o
+*.a
+
+# Logs & Runtime
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS & Editor
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment & Local keys
+.env
+.env.local
+.env.*.local
+
+# Temp media
+*.tmp
+tmp/

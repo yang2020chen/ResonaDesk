@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-cli/schema.json",
+  "productName": "ResonaDesk",
+  "version": "1.0.0",
+  "identifier": "com.appstudio.resonadesk",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5188",
+    "beforeBuildCommand": "npx vite build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "ResonaDesk 声纹工作台",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
+      }
+    ],
+    "security": {
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$TEMP/resona_transcriptions/*.wav"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "app"],
+    "category": "Productivity",
+    "resources": [
+      "../bin/ffmpeg",
+      "../bin/whisper-cli",
+      "../bin/models/**/*",
+      "../NOTICE.md"
+    ],
+    "shortDescription": "Zero-config local AI speech transcription and voice studio",
+    "longDescription": "ResonaDesk converts audio and video files into accurate transcriptions locally with Apple Silicon Metal acceleration."
+  }
+}

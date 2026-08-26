@@ -1,0 +1,62 @@
+{
+  "name": "resona-desk-win",
+  "private": true,
+  "version": "1.0.0",
+  "main": "electron/main.cjs",
+  "description": "ResonaDesk (声纹工作台) - Windows 独立离线音视频转录与声纹工坊",
+  "author": "App Studio",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "test": "tsx tests/win.test.mjs",
+    "preview": "vite preview",
+    "app:start": "electron .",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:zip": "npm run build && electron-builder --win --dir"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "tsx": "^4.23.12",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  },
+  "build": {
+    "appId": "com.appstudio.resonadesk",
+    "productName": "ResonaDesk",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "bin/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "bin/**/*"
+    ],
+    "win": {
+      "target": [
+        "dir",
+        "zip"
+      ],
+      "sign": null,
+      "forceCodeSigning": false
+    }
+  }
+}

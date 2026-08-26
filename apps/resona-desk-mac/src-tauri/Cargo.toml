@@ -1,0 +1,27 @@
+[package]
+name = "resona-desk"
+version = "1.0.0"
+description = "ResonaDesk (声纹工作台) - macOS 独立离线音视频转录与声纹工坊"
+authors = ["App Studio"]
+edition = "2021"
+
+[lib]
+name = "resona_desk_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0.0", features = ["tray-icon", "protocol-asset"] }
+tauri-plugin-shell = "2.0.0"
+tauri-plugin-dialog = "2.0.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.38", features = ["full"] }
+dirs = "5.0"
+log = "0.4"
+env_logger = "0.11"
