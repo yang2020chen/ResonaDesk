@@ -1,3 +1,4 @@
+export const isElectronEnv = (): boolean => typeof window !== 'undefined' && Boolean((window as any).electronAPI);
 import { TranscriptionJob, ModelInfo } from '../types';
 
 export const isTauriEnv = (): boolean => {
@@ -89,4 +90,32 @@ export async function getJobStatus(jobId: string): Promise<TranscriptionJob> {
   const res = await fetchWithTimeout(`${API_BASE}/jobs/${jobId}`, {}, 5000);
   if (!res.ok) throw new Error('获取任务状态失败');
   return res.json();
+}
+
+export async function saveExportFile(payload: { filename: string; content: string }): Promise<{ success: boolean; filePath: string; filename?: string }> {
+  if (isElectronEnv()) {
+    return await (window as any).electronAPI.saveExportFile(payload);
+  }
+  const res = await fetchWithTimeout(`${API_BASE}/save-file`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }, 10000);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `保存失败 (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+export async function revealFileInFinder(filePath: string): Promise<boolean> {
+  if (isElectronEnv()) {
+    return await (window as any).electronAPI.revealFile(filePath);
+  }
+  const res = await fetchWithTimeout(`${API_BASE}/reveal-file`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filePath })
+  }, 5000);
+  return res.ok;
 }

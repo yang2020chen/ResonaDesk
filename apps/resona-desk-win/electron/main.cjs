@@ -359,6 +359,42 @@ ipcMain.handle('engine:transcribe', async (_event, payload) => {
   return { jobId };
 });
 
+
+// Native File Export & Save Handler
+ipcMain.handle('file:save_export', async (_, { filename, content }) => {
+  try {
+    const downloadsDir = path.join(os.homedir(), 'Downloads');
+    if (!fs.existsSync(downloadsDir)) {
+      fs.mkdirSync(downloadsDir, { recursive: true });
+    }
+    let cleanFilename = (filename || 'export.txt').replace(/[/\\]/g, '_');
+    let targetPath = path.join(downloadsDir, cleanFilename);
+    if (fs.existsSync(targetPath)) {
+      const ext = path.extname(cleanFilename);
+      const base = path.basename(cleanFilename, ext);
+      let count = 1;
+      while (fs.existsSync(path.join(downloadsDir, `${base}_${count}${ext}`))) {
+        count++;
+      }
+      targetPath = path.join(downloadsDir, `${base}_${count}${ext}`);
+      cleanFilename = `${base}_${count}${ext}`;
+    }
+    fs.writeFileSync(targetPath, content, 'utf8');
+    return { success: true, filePath: targetPath, filename: cleanFilename, folder: downloadsDir };
+  } catch (err) {
+    return { success: false, error: err.message || '保存文件失败' };
+  }
+});
+
+ipcMain.handle('file:reveal', async (_, filePath) => {
+  if (filePath && fs.existsSync(filePath)) {
+    const { shell } = require('electron');
+    shell.showItemInFolder(filePath);
+    return true;
+  }
+  return false;
+});
+
 app.whenReady().then(() => {
   createWindow();
 

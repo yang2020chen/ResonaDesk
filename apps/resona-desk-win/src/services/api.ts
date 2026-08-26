@@ -1,8 +1,5 @@
+export const isElectronEnv = (): boolean => typeof window !== 'undefined' && Boolean((window as any).electronAPI);
 import { TranscriptionJob, ModelInfo } from '../types';
-
-export const isElectronEnv = (): boolean => {
-  return typeof window !== 'undefined' && Boolean((window as any).electronAPI);
-};
 
 export const isTauriEnv = (): boolean => {
   return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
@@ -35,13 +32,6 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
 }
 
 export async function checkBackendHealth(): Promise<boolean> {
-  if (isElectronEnv()) {
-    try {
-      return await (window as any).electronAPI.checkHealth();
-    } catch {
-      return true;
-    }
-  }
   if (isTauriEnv()) {
     try {
       return await invokeTauri<boolean>('check_backend_health');
@@ -58,9 +48,6 @@ export async function checkBackendHealth(): Promise<boolean> {
 }
 
 export async function fetchAvailableModels(): Promise<ModelInfo[]> {
-  if (isElectronEnv()) {
-    return await (window as any).electronAPI.getModels();
-  }
   if (isTauriEnv()) {
     return await invokeTauri<ModelInfo[]>('get_available_models');
   }
@@ -75,9 +62,6 @@ export async function startTranscription(payload: {
   language: string;
   diarize?: boolean;
 }): Promise<{ jobId: string }> {
-  if (isElectronEnv()) {
-    return await (window as any).electronAPI.startTranscription(payload);
-  }
   if (isTauriEnv()) {
     return await invokeTauri<{ jobId: string }>('start_transcription', {
       filePath: payload.filePath,
@@ -100,13 +84,38 @@ export async function startTranscription(payload: {
 }
 
 export async function getJobStatus(jobId: string): Promise<TranscriptionJob> {
-  if (isElectronEnv()) {
-    return await (window as any).electronAPI.getJobStatus(jobId);
-  }
   if (isTauriEnv()) {
     return await invokeTauri<TranscriptionJob>('get_job_status', { jobId });
   }
   const res = await fetchWithTimeout(`${API_BASE}/jobs/${jobId}`, {}, 5000);
   if (!res.ok) throw new Error('获取任务状态失败');
   return res.json();
+}
+
+export async function saveExportFile(payload: { filename: string; content: string }): Promise<{ success: boolean; filePath: string; filename?: string }> {
+  if (isElectronEnv()) {
+    return await (window as any).electronAPI.saveExportFile(payload);
+  }
+  const res = await fetchWithTimeout(`${API_BASE}/save-file`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }, 10000);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `保存失败 (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+export async function revealFileInFinder(filePath: string): Promise<boolean> {
+  if (isElectronEnv()) {
+    return await (window as any).electronAPI.revealFile(filePath);
+  }
+  const res = await fetchWithTimeout(`${API_BASE}/reveal-file`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filePath })
+  }, 5000);
+  return res.ok;
 }

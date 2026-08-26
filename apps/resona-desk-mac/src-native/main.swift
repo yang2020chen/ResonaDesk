@@ -116,8 +116,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
                  decidePolicyFor navigationAction: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if let url = navigationAction.request.url {
+            let scheme = url.scheme?.lowercased() ?? ""
+            // Block any in-window navigation to blob/data to prevent breaking the SPA UI
+            if scheme == "blob" || scheme == "data" {
+                decisionHandler(.cancel)
+                return
+            }
             let host = url.host ?? ""
-            if host != "127.0.0.1" && host != "localhost" && (url.scheme == "http" || url.scheme == "https") {
+            if host != "127.0.0.1" && host != "localhost" && (scheme == "http" || scheme == "https") {
                 NSWorkspace.shared.open(url)
                 decisionHandler(.cancel)
                 return

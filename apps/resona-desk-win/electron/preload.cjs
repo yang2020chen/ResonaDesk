@@ -13,4 +13,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startTranscription: (payload) => ipcRenderer.invoke('engine:transcribe', payload),
   getJobStatus: (jobId) => ipcRenderer.invoke('engine:job_status', jobId),
   openFileDialog: () => ipcRenderer.invoke('dialog:open_file'),
+  saveExportFile: (payload) => ipcRenderer.invoke('file:save_export', payload),
+  revealFile: (filePath) => ipcRenderer.invoke('file:reveal', filePath),
 });

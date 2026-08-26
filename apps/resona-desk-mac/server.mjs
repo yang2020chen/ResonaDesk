@@ -1,3 +1,4 @@
+import os from 'os';
 import http from 'http';
 import https from 'https';
 import url from 'url';
@@ -410,6 +411,67 @@ async function handleRequest(req, res) {
 
     fileStream.on('error', (err) => {
       return sendJSON(res, 500, { error: `Upload stream failed: ${err.message}` });
+    });
+    return;
+  }
+
+  // POST /api/save-file (Native File Saver to ~/Downloads)
+  if (req.method === 'POST' && parsed.pathname === '/api/save-file') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const { filename, content } = JSON.parse(body || '{}');
+        if (!filename || content === undefined) {
+          return sendJSON(res, 400, { error: 'Missing filename or content' });
+        }
+        const downloadsDir = path.join(os.homedir(), 'Downloads');
+        if (!fs.existsSync(downloadsDir)) {
+          fs.mkdirSync(downloadsDir, { recursive: true });
+        }
+        let cleanFilename = filename.replace(/[\/]/g, '_');
+        let targetPath = path.join(downloadsDir, cleanFilename);
+        
+        if (fs.existsSync(targetPath)) {
+          const ext = path.extname(cleanFilename);
+          const base = path.basename(cleanFilename, ext);
+          let count = 1;
+          while (fs.existsSync(path.join(downloadsDir, `${base}_${count}${ext}`))) {
+            count++;
+          }
+          targetPath = path.join(downloadsDir, `${base}_${count}${ext}`);
+          cleanFilename = `${base}_${count}${ext}`;
+        }
+
+        fs.writeFileSync(targetPath, content, 'utf8');
+        return sendJSON(res, 200, {
+          success: true,
+          filePath: targetPath,
+          filename: cleanFilename,
+          folder: downloadsDir
+        });
+      } catch (err) {
+        return sendJSON(res, 500, { error: `Save file error: ${err.message}` });
+      }
+    });
+    return;
+  }
+
+  // POST /api/reveal-file (Reveal file in macOS Finder)
+  if (req.method === 'POST' && parsed.pathname === '/api/reveal-file') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const { filePath } = JSON.parse(body || '{}');
+        if (filePath && fs.existsSync(filePath)) {
+          spawn('/usr/bin/open', ['-R', filePath]);
+          return sendJSON(res, 200, { success: true });
+        }
+        return sendJSON(res, 404, { error: 'File not found' });
+      } catch (e) {
+        return sendJSON(res, 500, { error: e.message });
+      }
     });
     return;
   }

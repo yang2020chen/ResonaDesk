@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Download, Copy, Check, FileCode, FileText, Film, Music, Globe, File, Languages, AlertCircle } from 'lucide-react';
+import { X, Download, Copy, Check, FileCode, FileText, Film, Music, Globe, File, Languages, AlertCircle, FolderOpen, Loader2 } from 'lucide-react';
 import { SubtitleSegment } from '../types';
+import { saveExportFile, revealFileInFinder } from '../services/api';
 import {
   exportToSRT,
   exportToVTT,
@@ -33,6 +34,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const hasTranslation = segments.some(s => s.translation && s.translation.trim().length > 0);
   const [contentMode, setContentMode] = useState<ExportContentMode>(hasTranslation ? 'bilingual' : 'original');
   const [copied, setCopied] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveResult, setSaveResult] = useState<{ success: boolean; filePath?: string; filename?: string; error?: string } | null>(null);
 
   if (!isOpen) return null;
 
@@ -58,7 +61,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   const currentContent = getExportContent();
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     // FCPXML is a Pro feature
     if (activeFormat === 'fcpxml' && !isProUser) {
       onOpenUpgrade();
@@ -73,9 +76,23 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     const suffix = modeSuffixMap[contentMode] || '';
 
     const extMap = { srt: 'srt', vtt: 'vtt', lrc: 'lrc', txt: 'txt', fcpxml: 'fcpxml' };
-    const mimeMap = { srt: 'text/plain', vtt: 'text/vtt', lrc: 'text/plain', txt: 'text/plain', fcpxml: 'application/xml' };
     const ext = extMap[activeFormat];
-    downloadFile(currentContent, `${baseName}${suffix}.${ext}`, mimeMap[activeFormat]);
+    const targetFileName = `${baseName}${suffix}.${ext}`;
+
+    setIsSaving(true);
+    setSaveResult(null);
+    try {
+      const res = await saveExportFile({ filename: targetFileName, content: currentContent });
+      if (res.success) {
+        setSaveResult({ success: true, filePath: res.filePath, filename: res.filename });
+      } else {
+        throw new Error((res as any).error || '导出失败');
+      }
+    } catch (err: any) {
+      setSaveResult({ success: false, error: err.message || '文件保存失败' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCopy = () => {
@@ -194,6 +211,38 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </label>
           </div>
 
+          {/* Save Result Notification Banner */}
+          {saveResult && (
+            <div className={`p-3.5 rounded-xl border flex items-center justify-between text-xs animate-fadeIn ${
+              saveResult.success
+                ? 'bg-emerald-950/40 border-emerald-800/80 text-emerald-300'
+                : 'bg-rose-950/40 border-rose-800/80 text-rose-300'
+            }`}>
+              <div className="flex items-center space-x-2 overflow-hidden pr-2">
+                {saveResult.success ? (
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                )}
+                <span className="truncate">
+                  {saveResult.success
+                    ? `✓ 文件已成功导出至: ${saveResult.filePath}`
+                    : `导出失败: ${saveResult.error}`}
+                </span>
+              </div>
+              {saveResult.success && saveResult.filePath && (
+                <button
+                  type="button"
+                  onClick={() => revealFileInFinder(saveResult.filePath!)}
+                  className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg text-xs font-semibold flex items-center space-x-1.5 border border-emerald-500/30 transition-all shrink-0 cursor-pointer shadow-sm hover:scale-105"
+                >
+                  <FolderOpen className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>在访达中显示</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* 4. Real-time Preview Box */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs text-slate-400">
@@ -223,10 +272,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </button>
             <button
               onClick={handleDownload}
-              className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all hover:scale-105"
+              disabled={isSaving}
+              className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all hover:scale-105 cursor-pointer disabled:opacity-60"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>下载 {activeFormat.toUpperCase()} 文件</span>
+              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              <span>{isSaving ? '正在导出落盘...' : `导出并保存 ${activeFormat.toUpperCase()} 文件`}</span>
             </button>
           </div>
         </div>
