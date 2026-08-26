@@ -447,20 +447,21 @@ export const App: React.FC = () => {
               onOpenUpgrade={() => setIsSettingsModalOpen(true)}
             />
 
-            {/* Settings Modal */}
-            <SettingsModal
-              isOpen={isSettingsModalOpen}
-              onClose={() => setIsSettingsModalOpen(false)}
-              aiSettings={aiSettings}
-              onSaveAISettings={handleSaveAISettings}
-              licenseKey={licenseKey}
-              onSaveLicenseKey={handleSaveLicenseKey}
-              licensePayload={licensePayload}
-              isProUser={isProUser}
-            />
           </div>
         )}
       </main>
+
+      {/* Global Settings & License Modal (Accessible anytime from Header) */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        aiSettings={aiSettings}
+        onSaveAISettings={handleSaveAISettings}
+        licenseKey={licenseKey}
+        onSaveLicenseKey={handleSaveLicenseKey}
+        licensePayload={licensePayload}
+        isProUser={isProUser}
+      />
     </div>
   );
 };

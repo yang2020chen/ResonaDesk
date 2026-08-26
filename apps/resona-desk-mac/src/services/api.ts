@@ -1,9 +1,10 @@
-export const isElectronEnv = (): boolean => typeof window !== 'undefined' && Boolean((window as any).electronAPI);
 import { TranscriptionJob, ModelInfo } from '../types';
 
-export const isTauriEnv = (): boolean => {
-  return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
-};
+export const isElectronEnv = (): boolean =>
+  typeof window !== 'undefined' && Boolean((window as any).electronAPI);
+
+export const isTauriEnv = (): boolean =>
+  typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
 
 export const API_BASE = '/api';
 
@@ -32,6 +33,13 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
 }
 
 export async function checkBackendHealth(): Promise<boolean> {
+  if (isElectronEnv()) {
+    try {
+      return await (window as any).electronAPI.checkHealth();
+    } catch {
+      return true;
+    }
+  }
   if (isTauriEnv()) {
     try {
       return await invokeTauri<boolean>('check_backend_health');
@@ -48,6 +56,9 @@ export async function checkBackendHealth(): Promise<boolean> {
 }
 
 export async function fetchAvailableModels(): Promise<ModelInfo[]> {
+  if (isElectronEnv()) {
+    return await (window as any).electronAPI.getModels();
+  }
   if (isTauriEnv()) {
     return await invokeTauri<ModelInfo[]>('get_available_models');
   }
@@ -62,6 +73,9 @@ export async function startTranscription(payload: {
   language: string;
   diarize?: boolean;
 }): Promise<{ jobId: string }> {
+  if (isElectronEnv()) {
+    return await (window as any).electronAPI.startTranscription(payload);
+  }
   if (isTauriEnv()) {
     return await invokeTauri<{ jobId: string }>('start_transcription', {
       filePath: payload.filePath,
@@ -84,6 +98,9 @@ export async function startTranscription(payload: {
 }
 
 export async function getJobStatus(jobId: string): Promise<TranscriptionJob> {
+  if (isElectronEnv()) {
+    return await (window as any).electronAPI.getJobStatus(jobId);
+  }
   if (isTauriEnv()) {
     return await invokeTauri<TranscriptionJob>('get_job_status', { jobId });
   }

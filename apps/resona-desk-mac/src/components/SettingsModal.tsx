@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck, Cpu, Check, Crown, FileText, Sparkles, ExternalLink, Mail, KeyRound, AlertCircle } from 'lucide-react';
+import { X, ShieldCheck, Cpu, Check, Crown, FileText, Sparkles, ExternalLink, Mail, KeyRound, AlertCircle, ClipboardPaste } from 'lucide-react';
 import { AISettings, AI_MODEL_PROVIDERS } from '../services/aiService';
 import { LicensePayload, verifyLicenseKey } from '../utils/licenseVerifier';
 
@@ -44,6 +44,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setProvider(newProvider);
     setModel(AI_MODEL_PROVIDERS[newProvider].defaultModel);
     setBaseUrl(AI_MODEL_PROVIDERS[newProvider].baseUrl);
+  };
+
+
+  const handlePasteToEmail = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) setInputEmail(text.trim());
+    } catch (err) {}
+  };
+
+  const handlePasteToKey = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) setInputKey(text.trim());
+    } catch (err) {}
+  };
+
+  const handlePasteToApiKey = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) setApiKey(text.trim());
+    } catch (err) {}
   };
 
   const handleVerifyAndSaveKey = async () => {
@@ -213,10 +235,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* 输入激活码表单 */}
               <div className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
                 <div>
-                  <label className="text-slate-300 font-semibold block mb-1 flex items-center space-x-1.5">
-                    <Mail className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>购买绑定邮箱 (Email)</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-slate-300 font-semibold flex items-center space-x-1.5">
+                      <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>购买绑定邮箱 (Email)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handlePasteToEmail}
+                      className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center space-x-1 hover:underline cursor-pointer"
+                    >
+                      <ClipboardPaste className="w-3 h-3" />
+                      <span>粘贴邮箱</span>
+                    </button>
+                  </div>
                   <input
                     type="email"
                     value={inputEmail}
@@ -232,7 +264,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <KeyRound className="w-3.5 h-3.5 text-amber-400" />
                       <span>离线激活码 (RD-PRO-... 或 AS-VIP-...)</span>
                     </label>
-
+                    <button
+                      type="button"
+                      onClick={handlePasteToKey}
+                      className="text-[10px] text-amber-400 hover:text-amber-300 flex items-center space-x-1 hover:underline cursor-pointer"
+                    >
+                      <ClipboardPaste className="w-3 h-3" />
+                      <span>粘贴激活码</span>
+                    </button>
                   </div>
                   <textarea
                     rows={2}
@@ -340,7 +379,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">API Key (BYOK 密钥本地加密存储)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-300 font-semibold">API Key (BYOK 密钥本地加密存储)</label>
+                  <button
+                    type="button"
+                    onClick={handlePasteToApiKey}
+                    className="text-[10px] text-brand-400 hover:text-brand-300 flex items-center space-x-1 hover:underline cursor-pointer"
+                  >
+                    <ClipboardPaste className="w-3 h-3" />
+                    <span>粘贴 Key</span>
+                  </button>
+                </div>
                 <input
                   type="password"
                   value={apiKey}

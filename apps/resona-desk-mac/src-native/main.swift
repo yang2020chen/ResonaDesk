@@ -8,17 +8,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
     var backendProcess: Process?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // 0. Load Native App Icon
+        // 0. Setup macOS Standard Main Menu (Enables Cmd+V Paste, Cmd+C Copy, Cmd+A Select All, Cmd+Z Undo, etc.)
+        setupMainMenu()
+
+        // 1. Load Native App Icon
         let bundleRes = Bundle.main.resourcePath ?? ""
         let iconPath = (bundleRes as NSString).appendingPathComponent("AppIcon.icns")
         if FileManager.default.fileExists(atPath: iconPath), let img = NSImage(contentsOfFile: iconPath) {
             NSApp.applicationIconImage = img
         }
 
-        // 1. Clean previous lingering server process & start backend
+        // 2. Clean previous lingering server process & start backend
         startBackend()
 
-        // 2. Setup Native macOS Window (1280x860, Slate-950 dark background)
+        // 3. Setup Native macOS Window (1280x860, Slate-950 dark background)
         let rect = NSRect(x: 0, y: 0, width: 1280, height: 860)
         window = NSWindow(
             contentRect: rect,
@@ -33,7 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         window.center()
         window.delegate = self
 
-        // 3. WebKit WebView configuration with UIDelegate & NavigationDelegate
+        // 4. WebKit WebView configuration with UIDelegate & NavigationDelegate
         let config = WKWebViewConfiguration()
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         
@@ -47,8 +50,53 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
-        // 4. Poll & load backend
+        // 5. Poll & load backend
         loadWhenReady()
+    }
+
+    func setupMainMenu() {
+        let mainMenu = NSMenu()
+        
+        // 1. App Menu (ResonaDesk)
+        let appMenuItem = NSMenuItem()
+        mainMenu.addItem(appMenuItem)
+        let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "关于 ResonaDesk", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(NSMenuItem.separator())
+        appMenu.addItem(withTitle: "隐藏 ResonaDesk", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        let hideOthersItem = NSMenuItem(title: "隐藏其他", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
+        hideOthersItem.keyEquivalentModifierMask = [.command, .option]
+        appMenu.addItem(hideOthersItem)
+        appMenu.addItem(withTitle: "显示全部", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: "")
+        appMenu.addItem(NSMenuItem.separator())
+        appMenu.addItem(withTitle: "退出 ResonaDesk", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenuItem.submenu = appMenu
+
+        // 2. Edit Menu (编辑 - 核心: 激活 Cmd+C, Cmd+V, Cmd+X, Cmd+A, Cmd+Z)
+        let editMenuItem = NSMenuItem()
+        mainMenu.addItem(editMenuItem)
+        let editMenu = NSMenu(title: "编辑")
+        editMenu.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
+        let redoItem = NSMenuItem(title: "重做", action: Selector(("redo:")), keyEquivalent: "Z")
+        redoItem.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(redoItem)
+        editMenu.addItem(NSMenuItem.separator())
+        editMenu.addItem(withTitle: "剪切", action: Selector(("cut:")), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "复制", action: Selector(("copy:")), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "粘贴", action: Selector(("paste:")), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "全选", action: Selector(("selectAll:")), keyEquivalent: "a")
+        editMenuItem.submenu = editMenu
+
+        // 3. Window Menu (窗口)
+        let windowMenuItem = NSMenuItem()
+        mainMenu.addItem(windowMenuItem)
+        let windowMenu = NSMenu(title: "窗口")
+        windowMenu.addItem(withTitle: "最小化", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        windowMenu.addItem(withTitle: "缩放", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
+        windowMenu.addItem(withTitle: "关闭窗口", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        windowMenuItem.submenu = windowMenu
+
+        NSApp.mainMenu = mainMenu
     }
 
     func startBackend() {
