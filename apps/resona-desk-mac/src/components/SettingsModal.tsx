@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck, Cpu, Check, Crown, FileText, Sparkles, ExternalLink, Mail, KeyRound, AlertCircle, Zap } from 'lucide-react';
+import { X, ShieldCheck, Cpu, Check, Crown, FileText, Sparkles, ExternalLink, Mail, KeyRound, AlertCircle } from 'lucide-react';
 import { AISettings, AI_MODEL_PROVIDERS } from '../services/aiService';
 import { LicensePayload, verifyLicenseKey } from '../utils/licenseVerifier';
 
@@ -232,14 +232,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <KeyRound className="w-3.5 h-3.5 text-amber-400" />
                       <span>离线激活码 (RD-PRO-... 或 AS-VIP-...)</span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={handleFillDemoKey}
-                      className="text-[10px] text-amber-400/80 hover:text-amber-300 flex items-center space-x-1 hover:underline cursor-pointer"
-                    >
-                      <Zap className="w-3 h-3" />
-                      <span>填入测试码</span>
-                    </button>
+
                   </div>
                   <textarea
                     rows={2}

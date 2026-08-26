@@ -223,15 +223,16 @@ const payload = { email: 'commercial@resona.desk', product: 'ResonaDesk', tier: 
 const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
 const payloadB64 = bytesToBase64Url(payloadBytes);
 
-const sigBytes = new Uint8Array(await globalThis.crypto.subtle.sign({ name: 'Ed25519' }, keyPair.privateKey, payloadBytes));
+const messageBytes = new TextEncoder().encode(payloadB64);
+const sigBytes = new Uint8Array(await globalThis.crypto.subtle.sign({ name: 'Ed25519' }, keyPair.privateKey, messageBytes));
 const sigB64 = bytesToBase64Url(sigBytes);
 
 const validLicenseKey = `RD-PRO-${payloadB64}.${sigB64}`;
-const resValid = await verifyLicenseKey(validLicenseKey, pubKeyHex);
+const resValid = await verifyLicenseKey(validLicenseKey, 'commercial@resona.desk', pubKeyHex);
 if (!resValid.valid) throw new Error(`合法激活码验签失败: ${resValid.reason}`);
 
 const forgedKey = `RD-PRO-${payloadB64}.tampered_signature_bytes_12345`;
-const resForged = await verifyLicenseKey(forgedKey, pubKeyHex);
+const resForged = await verifyLicenseKey(forgedKey, 'commercial@resona.desk', pubKeyHex);
 if (resForged.valid) throw new Error('伪造激活码未被成功拦截');
 
 console.log(`   ✓ 合法 Ed25519 商业激活码离线验签成功 (授权模式: ${resValid.payload.tier})`);

@@ -51,20 +51,7 @@ export async function verifyLicenseKey(
   const cleanKey = (licenseKey || '').trim();
   const cleanEmail = (inputEmail || '').trim().toLowerCase();
 
-  // 1. 兼容开发者快速内测激活码
-  if (cleanKey.toUpperCase() === 'RD-PRO-TEST-2026' || cleanKey.toUpperCase() === 'RD-PRO-DEMO') {
-    return {
-      valid: true,
-      payload: {
-        email: cleanEmail || 'demo-user@appstudio.local',
-        product: 'resonadesk',
-        tier: 'pro_lifetime',
-        v: 1,
-        exp: 0,
-        iat: Math.floor(Date.now() / 1000)
-      }
-    };
-  }
+  // 1. 严格执行正式商业版 Ed25519 离线数字签名校验 (已彻底移除测试码放行后门)
 
   // 2. 格式校验 (支持 RD-PRO- 单品 或 AS-VIP- 全家桶)
   const isRdKey = cleanKey.startsWith('RD-PRO-');

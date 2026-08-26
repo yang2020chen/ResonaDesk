@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck, Cpu, Check, Crown, FileText, Sparkles, ExternalLink, Mail, KeyRound, AlertCircle } from 'lucide-react';
+import { X, Key, ShieldCheck, Cpu, ExternalLink, Check, Copy, Crown, Sparkles, BookOpen, FileText } from 'lucide-react';
 import { AISettings, AI_MODEL_PROVIDERS } from '../services/aiService';
 import { LicensePayload, verifyLicenseKey } from '../utils/licenseVerifier';
 
@@ -26,10 +26,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'license' | 'ai' | 'notices'>('license');
   const [inputKey, setInputKey] = useState<string>(licenseKey);
-  const [inputEmail, setInputEmail] = useState<string>(licensePayload?.email || '');
   const [keyError, setKeyError] = useState<string>('');
   const [keySuccess, setKeySuccess] = useState<boolean>(false);
-  const [isVerifying, setIsVerifying] = useState<boolean>(false);
 
   // AI settings local state
   const [provider, setProvider] = useState(aiSettings.provider);
@@ -51,33 +49,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setKeySuccess(false);
 
     if (!inputKey.trim()) {
-      setKeyError('请输入有效的激活码');
+      onSaveLicenseKey('');
       return;
     }
 
-    setIsVerifying(true);
-    try {
-      const res = await verifyLicenseKey(inputKey.trim(), inputEmail.trim());
-      if (res.valid) {
-        onSaveLicenseKey(inputKey.trim());
-        setKeySuccess(true);
-        setTimeout(() => {
-          setKeySuccess(false);
-        }, 3000);
-      } else {
-        setKeyError(res.reason || '激活码无效或已被篡改');
-      }
-    } catch (e: any) {
-      setKeyError(e?.message || '验签异常');
-    } finally {
-      setIsVerifying(false);
+    const res = await verifyLicenseKey(inputKey.trim());
+    if (res.valid) {
+      onSaveLicenseKey(inputKey.trim());
+      setKeySuccess(true);
+    } else {
+      setKeyError(res.error || '激活码无效或已损坏');
     }
-  };
-
-  const handleFillDemoKey = () => {
-    setInputEmail('creator@appstudio.pro');
-    setInputKey('RD-PRO-TEST-2026');
-    setKeyError('');
   };
 
   const handleSaveAI = () => {
@@ -98,7 +80,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-5 h-5 text-brand-400" />
-            <h3 className="text-sm font-semibold text-white">系统偏好设置与授权中心</h3>
+            <h3 className="text-sm font-semibold text-white">系统偏好设置与合规中心</h3>
           </div>
           <button onClick={onClose} className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
             <X className="w-4 h-4" />
@@ -116,7 +98,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <Crown className="w-3.5 h-3.5" />
-            <span>👑 商业授权与购买</span>
+            <span>商业授权管理</span>
           </button>
           <button
             onClick={() => setActiveTab('ai')}
@@ -146,162 +128,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
           {activeTab === 'license' && (
             <div className="space-y-4">
-              {/* 授权状态看板 */}
               <div className="bg-gradient-to-br from-slate-950 to-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-xl ${isProUser ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-400'}`}>
-                      <Crown className="w-5 h-5" />
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <Crown className={`w-5 h-5 ${isProUser ? 'text-amber-400' : 'text-slate-500'}`} />
                     <div>
-                      <h4 className="font-bold text-white text-sm">
-                        {isProUser ? 'ResonaDesk Pro 终身商业授权' : 'ResonaDesk 基础免费版'}
+                      <h4 className="font-semibold text-white">
+                        {isProUser ? 'ResonaDesk Pro 终身商业授权' : 'ResonaDesk 免费基础版'}
                       </h4>
-                      <p className="text-slate-400 text-[11px] mt-0.5">
+                      <p className="text-slate-400 text-[11px]">
                         {isProUser
-                          ? `已绑定授权：${licensePayload?.email || '已激活'}`
-                          : '升级解锁多说话人无限制分离、时间轴自由拆分合并与 Final Cut Pro 剪辑工程一键直出'}
+                          ? `授权用户: ${licensePayload?.email || '已激活'}`
+                          : '解锁 Final Cut Pro XML 剪辑工程一键导出与全量 AI 智能精修'}
                       </p>
                     </div>
                   </div>
-                  {isProUser ? (
-                    <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 text-[10px]">
-                      PRO 终身已激活
-                    </span>
-                  ) : (
-                    <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 font-semibold text-[10px]">
-                      未激活
+                  {isProUser && (
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 text-[10px]">
+                      PRO ACTIVE
                     </span>
                   )}
                 </div>
-
-                {/* Pro 核心特权清单 */}
-                <div className="pt-2 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px] text-slate-300">
-                  <div className="flex items-center space-x-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>无限制多角色声纹分离与占比</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>时间轴毫秒级自由拆分/合并</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Final Cut Pro (FCPXML) 工程直出</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>大模型去语气词润色与双语精翻</span>
-                  </div>
-                </div>
               </div>
 
-              {/* 输入激活码表单 */}
-              <div className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-                <div>
-                  <label className="text-slate-300 font-semibold block mb-1 flex items-center space-x-1.5">
-                    <Mail className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>购买绑定邮箱 (Email)</span>
-                  </label>
+              {/* Input Key */}
+              <div className="space-y-2">
+                <label className="text-slate-300 font-semibold block">离线激活码 (Ed25519 纯本地验签)</label>
+                <div className="flex space-x-2">
                   <input
-                    type="email"
-                    value={inputEmail}
-                    onChange={(e) => setInputEmail(e.target.value)}
-                    placeholder="your-email@example.com"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-slate-200 text-xs focus:outline-none focus:border-brand-500"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-slate-300 font-semibold flex items-center space-x-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                      <span>离线激活码 (RD-PRO-... 或 AS-VIP-...)</span>
-                    </label>
-
-                  </div>
-                  <textarea
-                    rows={2}
+                    type="text"
                     value={inputKey}
                     onChange={(e) => setInputKey(e.target.value)}
-                    placeholder="RD-PRO-XXXX... 或 全家桶超级码 AS-VIP-XXXX..."
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-brand-500 resize-none"
+                    placeholder="RD-PRO-eyJlbWFpbCI..."
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-brand-500"
                   />
+                  <button
+                    onClick={handleVerifyAndSaveKey}
+                    className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold transition-all shadow-sm"
+                  >
+                    验证激活
+                  </button>
                 </div>
-
-                {keyError && (
-                  <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center space-x-2 text-[11px] text-rose-300">
-                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                    <span>{keyError}</span>
-                  </div>
-                )}
-
-                {keySuccess && (
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center space-x-2 text-[11px] text-emerald-300">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>✓ 恭喜！激活成功，已解锁全部 Pro 终身商业权益。</span>
-                  </div>
-                )}
-
-                <button
-                  onClick={handleVerifyAndSaveKey}
-                  disabled={isVerifying}
-                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-600 hover:to-amber-500 text-slate-950 rounded-xl font-bold transition-all shadow-md shadow-amber-500/20 flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-60"
-                >
-                  <Crown className="w-4 h-4 text-slate-950 fill-current" />
-                  <span>{isVerifying ? '正在进行 Ed25519 本地离线验签...' : '验证并立即激活 Pro 授权'}</span>
-                </button>
+                {keyError && <p className="text-rose-400 text-[11px] font-medium">{keyError}</p>}
+                {keySuccess && <p className="text-emerald-400 text-[11px] font-medium">✓ 激活成功！已解锁全部 Pro 终身权益。</p>}
               </div>
 
-              {/* 官方购买通道跳转入口 */}
-              <div className="space-y-2 pt-1">
-                <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                  <span>尚未获取激活码？点击下方直达官方结账通道：</span>
-                  <span className="text-emerald-400 flex items-center space-x-1 text-[10px]">
-                    <ShieldCheck className="w-3 h-3" />
-                    <span>支付后自动生成并邮件发送</span>
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2.5">
-                  {/* 单品购买直达 */}
-                  <a
-                    href="https://blog.757688.xyz/resonadesk/#buy"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-3 rounded-xl bg-gradient-to-r from-purple-950/40 to-slate-900 border border-purple-500/40 hover:border-purple-400 text-purple-200 hover:text-white flex items-center justify-between transition-all group cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="text-base">🎚️</span>
-                      <div>
-                        <p className="font-bold text-slate-100 group-hover:text-purple-300 text-xs">
-                          单品微信/支付宝买断
-                        </p>
-                        <p className="text-[10px] text-slate-400">官方早鸟 ¥29.99 (终身)</p>
-                      </div>
-                    </div>
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-300" />
-                  </a>
-
-                  {/* 全家桶会员直达 */}
-                  <a
-                    href="https://blog.757688.xyz/apps/"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-3 rounded-xl bg-gradient-to-r from-amber-950/40 to-slate-900 border border-amber-500/40 hover:border-amber-400 text-amber-200 hover:text-white flex items-center justify-between transition-all group cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="text-base">💎</span>
-                      <div>
-                        <p className="font-bold text-slate-100 group-hover:text-amber-300 text-xs">
-                          App Studio 全家桶会员
-                        </p>
-                        <p className="text-[10px] text-slate-400">¥199 一码通刷旗下所有软件</p>
-                      </div>
-                    </div>
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-300" />
-                  </a>
-                </div>
+              <div className="border-t border-slate-800/80 pt-3 text-slate-400 text-[11px] space-y-1 leading-relaxed">
+                <p>💡 <strong>100% 离线隐私保证</strong>：激活码采用非对称密码学（Ed25519）在您的 Mac 本地验签，无需向任何远程服务器联网汇报。</p>
               </div>
             </div>
           )}

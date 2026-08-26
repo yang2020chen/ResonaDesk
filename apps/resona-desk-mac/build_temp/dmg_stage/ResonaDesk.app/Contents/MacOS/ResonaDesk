@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../Resources" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
+# Ensure execution permissions for bundled binaries
+chmod +x "$DIR/bin/ffmpeg" "$DIR/bin/whisper-cli"
+
+# Check & start backend server
+PORT=3188 node server.mjs &
+SERVER_PID=$!
+
+trap "kill $SERVER_PID 2>/dev/null || true" EXIT INT TERM
+
+# Wait for server health
+for i in {1..20}; do
+  if curl -s "http://127.0.0.1:3188/api/health" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.3
+done
+
+# Start lightweight local static server or open browser
+npx --yes serve -s dist -l 5188 --single &
+SERVE_PID=$!
+
+sleep 1
+open "http://localhost:5188"
+
+wait $SERVE_PID
